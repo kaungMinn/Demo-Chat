@@ -26,7 +26,7 @@ connectDB();
 
 // Basic route
 app.use('/map/v1/auth/', authRouter);
-app.use("/map/v1/node", nodeRouter)
+app.use("/map/v1/node", nodeRouter);
 
 // Start server
 const PORT = process.env.PORT || 3000;
