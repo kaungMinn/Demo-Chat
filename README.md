@@ -14,3 +14,5 @@ change .env.txt to .env
 npm install
 npm install -g nodemon
 npm run dev
+
+## CREDENTIALS ARE NOT IMPORTANT HERE BECAUSE I USED THE GMAIL I NO LONGER USE.
