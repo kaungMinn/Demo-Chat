@@ -1,4 +1,4 @@
-import { Model, Schema } from "mongoose";
+import { Model, Schema,Document } from "mongoose";
 import { z } from "zod";
 import { nodeValidation } from "../validations/nodeValidations";
 
@@ -9,12 +9,28 @@ export type Roles = {
 };
 
 export interface IUser extends Document {
-    _id: Schema.Types.ObjectId;
     name: string;
     displayName: string;
-    roles: roles;
+    email: string;
+    isOnline: boolean;
+    lastSeen: Date;
+    roles: Roles;
     password: string;
     refreshToken?: string;
+}
+
+export interface IConversation extends Document {
+    userId: Schema.Types.ObjectId;
+    adminId: Schema.Types.ObjectId;
+    unreadCount?: number;
+    lastMessage?: string;
+}
+
+export interface IMessage extends Document {
+    conversationId: Schema.Types.ObjectId;
+    senderId: Schema.Types.ObjectId;
+    receiverId: Schema.Types.ObjectId;
+    message: string;   
 }
 
 

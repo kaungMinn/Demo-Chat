@@ -15,6 +15,21 @@ export const userSchema = new mongoose.Schema<IUser>({
        type: String,
        required: true,
     },
+    email: {
+        type: String,
+        required: [true, 'Email is required'],
+        unique: true,
+        lowercase: true,
+        trim: true,
+    },
+    isOnline: {
+        type: Boolean,
+        default: false,
+    },
+    lastSeen: {
+        type: Date,
+        default: Date.now,
+    },
     roles: {
       user: {
         type: Number,
