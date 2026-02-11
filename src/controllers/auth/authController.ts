@@ -37,12 +37,12 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             res.json(responseData('success', 'Successfully login.', {accessToken}));
 
         } else {
-            res.status(StatusCodes.UNAUTHORIZED).json(responseData('error', "User doesn't exist."))
+            res.status(StatusCodes.UNAUTHORIZED).json(responseData('error', "Invalid credentials"))
         }
 
     } catch (error) {
         console.error(error);
-        next(error)
+        next(error);
     }
 
 }
