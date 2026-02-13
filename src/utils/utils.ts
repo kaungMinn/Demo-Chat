@@ -56,8 +56,6 @@ const isObjectId = (id: any): boolean => {
 }
 
 
-
-
 export const dataUtils = {
     isObjectId,
     isValidObjectId,
