@@ -15,9 +15,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             return;
         }
 
-        const { name, password } = validation.data;
+        const {password, email } = validation.data;
 
-        const existingUser = await User.findOne({ displayName: name }).exec();
+        const existingUser = await User.findOne({ email: email }).exec();
 
         if (!existingUser) {
             res.status(StatusCodes.UNAUTHORIZED).json(responseData('error', 'Invalid credentials.'));
@@ -34,7 +34,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             await existingUser.save();
             cookieUtils.create('jwt', refreshToken, res);
 
-            res.json(responseData('success', 'Successfully login.', {accessToken}));
+            res.json(responseData('success', 'Successfully login.', {accessToken, user: {roles:Object.values(existingUser.roles || {}).filter(val=>val), name: existingUser.displayName}}));
 
         } else {
             res.status(StatusCodes.UNAUTHORIZED).json(responseData('error', "Invalid credentials"))
@@ -116,15 +116,16 @@ const refreshTheToken = async (req: Request, res: Response, next: NextFunction) 
 const register = async (req: Request, res: Response): Promise<void> => {
     try{
         const validation = authValidation.safeParse(req.body);
+
         if(!validation.success){
             res.status(StatusCodes.BAD_REQUEST).json({
-                error: "Provide name and password.",
+                error: "Please provide all required fields",
                 data: validation.error.errors
             })
             return;
         }
 
-        const {name: displayName, password} = validation.data;
+        const {name: displayName = "",email, password, roles} = validation.data;
         const name = displayName.toLocaleLowerCase().trim();
 
         const existingUser = await User.findOne({name: name}).exec();
@@ -140,8 +141,10 @@ const register = async (req: Request, res: Response): Promise<void> => {
 
         const result = await User.create({
             name,
+            email,
             displayName,
-            password: hashedPassword
+            password: hashedPassword,
+            roles
         });
     
 

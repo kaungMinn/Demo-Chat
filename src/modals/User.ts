@@ -17,7 +17,7 @@ export const userSchema = new mongoose.Schema<IUser>({
     },
     email: {
         type: String,
-        required: [true, 'Email is required'],
+        required: false,
         unique: true,
         lowercase: true,
         trim: true,
@@ -25,6 +25,11 @@ export const userSchema = new mongoose.Schema<IUser>({
     isOnline: {
         type: Boolean,
         default: false,
+    },
+    connectionStatus: {
+        type: String,
+        enum: ['disconnected', 'connecting', 'connected'],
+        default: 'disconnected'
     },
     lastSeen: {
         type: Date,

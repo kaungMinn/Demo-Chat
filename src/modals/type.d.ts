@@ -13,6 +13,7 @@ export interface IUser extends Document {
     displayName: string;
     email: string;
     isOnline: boolean;
+    connectionStatus: 'disconnected' | 'connecting' | 'connected';
     lastSeen: Date;
     roles: Roles;
     password: string;
@@ -23,6 +24,7 @@ export interface IConversation extends Document {
     userId: Schema.Types.ObjectId;
     adminId: Schema.Types.ObjectId;
     unreadCount?: number;
+    totalMessages?: number;
     lastMessage?: string;
 }
 

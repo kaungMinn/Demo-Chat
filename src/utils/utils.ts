@@ -1,13 +1,7 @@
 import { Response } from "express";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 
-export const responseData = (success: "success" | "error", message: string, details?: any) => {
-    return {
-        success: success === "success",
-        message,
-        details
-    }
-}
 
 //Cookies
  const clear = (cookie: "jwt",res: Response) => {
@@ -38,3 +32,34 @@ export const currentDateTime = () => {
 };
 
 export const dateUtils = {currentDateTime}
+
+//Data validation utils
+
+export const responseData = (success: "success" | "error", message: string, details?: any) => {
+    return {
+        success: success === "success",
+        message,
+        details
+    }
+}
+
+
+const isValidObjectId = (value: string) => {
+    return mongoose.Types.ObjectId.isValid(value);
+}
+
+
+const isObjectId = (id: any): boolean => { 
+    if (!id) return false;
+    if(typeof id !== "string") return false;
+    return isValidObjectId(id);
+}
+
+
+
+
+export const dataUtils = {
+    isObjectId,
+    isValidObjectId,
+    responseData
+}

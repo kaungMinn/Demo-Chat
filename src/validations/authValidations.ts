@@ -10,6 +10,8 @@ export const passwordValidation = z.string()
 
 
 export const authValidation = z.object({
-    name: z.string().min(1, "Username is required"),
+    name: z.string().optional(),
+    roles: z.array(z.number()).optional(),
+    email: z.string().email("Invalid email"),
     password: passwordValidation
 })

@@ -17,7 +17,7 @@ export const createToken = (
       throw new Error('Token secrets not configured');
     }
 
-    const roles = Object.values(userData.roles!) as number[];
+    const roles = Object.values(userData.roles!).filter(role => role) as number[];
   
     const payload: TokenPayload = {
       userInfo: {
