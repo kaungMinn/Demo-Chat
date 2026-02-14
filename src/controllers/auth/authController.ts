@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { authValidation } from "../../validations/authValidations";
 import User from "../../modals/User";
+import Conversation from "../../modals/Conversation";
 import bcrypt, { hash } from 'bcrypt';
 import { cookieUtils, responseData } from "../../utils/utils";
 import { createToken } from "./utils/token.util";
@@ -27,6 +28,22 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         const match = await bcrypt.compare(password, existingUser.password);
 
         if (match) {
+            // Get only the last conversation ID if user is admin
+            let lastConversationId = undefined;
+            let userId = undefined;
+            if (existingUser.roles.admin) {
+                const lastConversation = await Conversation.findOne({
+                    adminId: existingUser._id
+                })
+                .sort({ updatedAt: -1 })
+                .select(['_id', 'userId'])
+                .exec();
+
+                console.log("last conversation", lastConversation);
+                lastConversationId = lastConversation?._id;
+                userId = lastConversation?.userId;
+            }
+
             const accessToken = createToken(existingUser, 'access');
             const refreshToken = createToken(existingUser, 'refresh');
             existingUser.refreshToken = refreshToken;
@@ -34,7 +51,16 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             await existingUser.save();
             cookieUtils.create('jwt', refreshToken, res);
 
-            res.json(responseData('success', 'Successfully login.', {accessToken, user: {roles:Object.values(existingUser.roles || {}).filter(val=>val), name: existingUser.displayName}}));
+            res.json(responseData('success', 'Successfully login.', {
+                accessToken, 
+                user: {
+                    roles:Object.values(existingUser.roles || {}).filter(val=>val), 
+                    name: existingUser.displayName, 
+                    id: existingUser._id,
+                    userId,
+                    lastConversationId
+                }
+            }));
 
         } else {
             res.status(StatusCodes.UNAUTHORIZED).json(responseData('error', "Invalid credentials"))

@@ -13,7 +13,7 @@ const get = async (req: Request, res: Response, next: NextFunction) => {
     const { conversationId } = req.params;
     const userId = req.user?._id;
 
-    // 1. Get pagination params from query (e.g., /api/messages/:id?page=1&limit=20)
+    // Get pagination params from query (e.g., /api/messages/:id?page=1&limit=20)
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
@@ -28,7 +28,7 @@ const get = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(StatusCodes.BAD_REQUEST).json(dataUtils.responseData("error", "Invalid conversation ID format"));
     }
 
-    // 2. Fetch messages and total count in parallel (Performance win!)
+    // Fetch messages and total count in parallel (Performance win!)
     const [messages, totalMessages] = await Promise.all([
       Message.find({
         conversationId,
@@ -44,7 +44,7 @@ const get = async (req: Request, res: Response, next: NextFunction) => {
       })
     ]);
 
-    // 3. Return data with pagination metadata
+    // Return data with pagination metadata
     return res.status(StatusCodes.OK).json(dataUtils.responseData(
       "success", 
       "Messages retrieved successfully", 
@@ -66,21 +66,7 @@ const get = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 const create = async (req: Request, res: Response, next: NextFunction) => {
-    // Use transactions only if not in test environment (requires replica set)
-    const useTransactions = process.env.NODE_ENV !== 'test';
-    let session: any = null;
-
-    if (useTransactions) {
-        session = await mongoose.startSession();
-        session.startTransaction();
-    }
-
-    const endSession = async () => {
-        if (session) {
-            await session.abortTransaction();
-            session.endSession();
-        }
-    }
+   
 
     try{
       const userData = req.user;
@@ -90,18 +76,16 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
       const validatedData = messageValidation.safeParse(requestData);
 
       if(!validatedData.success){
-        await endSession();
         return res.status(StatusCodes.BAD_REQUEST).json(dataUtils.responseData("error", "Invalid request data", validatedData.error.flatten().fieldErrors));
       }
       
       let {conversationId, receiverId, message, roles: validatedRoles} = validatedData.data;
 
-      const hasSender = await User.findById(senderId).session(session);
+      const hasSender = await User.findById(senderId);
 
-      const hasReceiver = await User.findById(receiverId).session(session);
+      const hasReceiver = await User.findById(receiverId);
 
        if(!hasSender || !hasReceiver){
-        await endSession();
         return res.status(StatusCodes.NOT_FOUND).json(dataUtils.responseData("error", "Conversation, sender or receiver not found", null));
       }
 
@@ -113,10 +97,9 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
             { userId: senderId },
             { adminId: senderId }
           ]
-        }).session(session);
+        });
         
         if(!conversation){
-            await endSession();
             return res.status(StatusCodes.NOT_FOUND).json(dataUtils.responseData("error", "Conversation not found or access denied", null));
         }
       }else{
@@ -131,15 +114,15 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
         { 
             // Only set these if creating a NEW document
             $setOnInsert: { 
-                userId: validatedRoles.includes(userConstants.USER) ? receiverId : senderId, 
-                adminId: validatedRoles.includes(userConstants.USER) ? senderId : receiverId,
+                userId: validatedRoles.includes(userConstants.USER) ? senderId : receiverId, 
+                adminId: validatedRoles.includes(userConstants.USER) ? receiverId : senderId,
                 lastMessage: message 
             } 
         },
         { 
             upsert: true, // Create if not found
             new: true,    // Return the new/found doc
-            session       // Keep it in the transaction
+          
         }
     );
     conversationId = conversation._id.toString();
@@ -150,9 +133,14 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
         senderId, 
         receiverId, 
         message
-      }], {session});
+      }]);
 
-      // 4. Update the Conversation's lastMessage (Crucial Step)
+      // Populate the message with sender details for broadcasting
+      const populatedMessage = await Message.findById(newMessage[0]._id)
+        .populate('senderId', 'displayName email')
+        .exec();
+
+      //Update the Conversation's lastMessage (Crucial Step)
         // We also increment an unreadCount if you have one!
         await Conversation.findByIdAndUpdate(
             conversationId,
@@ -163,12 +151,14 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
                     unreadCount: 1 // Only increment this if the sender is NOT the one viewing it
                 },
                 updatedAt: new Date() // Forces the conversation to the top of the list
-            },
-            { session }
+            }
         );
 
-      if (useTransactions) {
-          await session.commitTransaction();
+      // Emit real-time notification via Socket.IO
+      const io = req.app.get('io');
+      if (io) {
+        io.to(conversationId).emit('new_message', populatedMessage);
+        console.log(`Message broadcasted via Socket.IO to conversation ${conversationId}`);
       }
 
       return res.status(StatusCodes.CREATED).json(dataUtils.responseData("success", "Message sent successfully", {
@@ -176,15 +166,7 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
         conversationId
       }));
     }catch(error){
-        if (useTransactions && session) {
-            await session.abortTransaction();
-        }
-        console.log("error", error);
         next(error)
-    }finally{
-      if (session) {
-          session.endSession();
-      }
     }
 }
 

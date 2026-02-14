@@ -5,3 +5,4 @@ import { conversationController } from "../controllers/conversation/conversation
 export const conversationRouter = Router();
 
 conversationRouter.route("/admin").get(conversationController.getAdminConversations);
+conversationRouter.route("/user").get(conversationController.getUserConversations);

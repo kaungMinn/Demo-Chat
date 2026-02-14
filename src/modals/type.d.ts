@@ -35,21 +35,4 @@ export interface IMessage extends Document {
     message: string;   
 }
 
-
-export interface INode extends Document {
-    _id: Schema.Types.ObjectId;
-    user: Schema.Types.ObjectId;
-    name: string;
-    displayName: string;
-    desc: string;
-    lat: number;
-    lon: number;
-    image: string;
-}
-
-
-// export type INode = z.infer<typeof nodeValidation>
-
-
 export type UserModal = Model<IUser>
-export type NodeModal = Model<INode>

@@ -10,23 +10,21 @@ import mongoose from 'mongoose';
 import { corsOption } from './cors/corsOption';
 import { authRouter } from './routes/authRoutes';
 import cookieParser from 'cookie-parser';
-import { nodeRouter } from './routes/nodeRoutes';
 import { messageRouter } from './routes/messageRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { verifyJWT } from './middleware/verifyJwt';
 import dns from 'node:dns';
-import { isAdmin } from './middleware/isAdmin';
 import { conversationRouter } from './routes/conversationRoutes';
+import { initializeSocketHandlers } from './socket/socketHandlers';
 
 // Import mock middleware for tests
 const isTesting = process.env.NODE_ENV === 'test';
 let authMiddleware: any;
 if (isTesting) {
     authMiddleware = require('../tests/mockMiddleware').mockVerifyJWT;
-}else{
-  authMiddleware = verifyJWT
 }
 
+// For window server
 dns.setServers([
   '8.8.8.8',
   '8.8.4.4',
@@ -41,6 +39,9 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: corsOption
 });
+
+// Make io instance available to routes
+app.set('io', io);
 
 // Middlewares
 app.use(cors(corsOption));
@@ -70,11 +71,10 @@ connectDB();
 
 // Routes
 app.use('/bleep/v1/auth', authRouter);
-app.use("/map/v1/node", nodeRouter);
-// Use mock middleware in test environment, real middleware otherwise
-app.use('/bleep/v1/messages', authMiddleware, messageRouter);
 
-app.use("/bleep/v1/conversations", authMiddleware, isAdmin, conversationRouter );
+app.use('/bleep/v1/messages', isTesting ? authMiddleware : verifyJWT, messageRouter);
+
+app.use("/bleep/v1/conversations", verifyJWT, conversationRouter );
 
 //Error Handler
 app.use(errorHandler)
@@ -93,16 +93,9 @@ mongoose.connection.once("open", () => {
 });
 
 // Socket.IO connection handling
-io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
-    
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-    });
-});
+initializeSocketHandlers(io);
 
 // Handle DB connection errors
-
 if (process.env.NODE_ENV !== 'test') {
   mongoose.connection.on("error", (err) => {
     console.error("❌ MongoDB connection error:", err);

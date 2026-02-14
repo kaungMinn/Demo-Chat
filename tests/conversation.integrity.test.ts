@@ -3,7 +3,6 @@ import { app } from '../src/app';
 import Conversation from '../src/modals/Conversation';
 import User from '../src/modals/User';
 import mongoose from 'mongoose';
-import { userConstants } from '../src/constants/userConstants';
 
 describe('Sentinel Message Controller', () => {
     const mockUserId = new mongoose.Types.ObjectId().toString();
@@ -17,40 +16,36 @@ describe('Sentinel Message Controller', () => {
             displayName: 'Test User',
             email: 'user@test.com',
             password: 'password123',
-            roles: {
-                user: userConstants.USER
-            }
+            roles: { user: 2001 }
         });
-        
+
         await User.create({
             _id: mockAdminId,
             name: 'testadmin',
             displayName: 'Test Admin',
             email: 'admin@test.com',
             password: 'password123',
-            roles: {
-                user: userConstants.ADMIN
-            }
+            roles: { admin: 2003 }
         });
 
         // 1. First message from User to Admin
         const res1 = await request(app)
             .post('/bleep/v1/messages')
-            .set('user', JSON.stringify({ _id: mockUserId, roles: [2001] })) // Mocking your req.user
+            .set('user', JSON.stringify({ _id: mockUserId, roles: [2001] }))
             .send({
                 receiverId: mockAdminId,
                 message: "Help me!",
-                roles: [userConstants]
+                roles: [2001]
             });
 
         // 2. Second message from Admin to User (No conversationId provided)
         const res2 = await request(app)
             .post('/bleep/v1/messages')
-            .set('user', JSON.stringify({ _id: mockAdminId, roles: [2002] }))
+            .set('user', JSON.stringify({ _id: mockAdminId, roles: [2003] }))
             .send({
                 receiverId: mockUserId,
                 message: "I am here to help.",
-                roles: [userConstants.ADMIN]
+                roles: [2003]
             });
 
         // THE BANK TEST: Both must have the same conversationId
