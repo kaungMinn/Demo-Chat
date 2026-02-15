@@ -147,9 +147,7 @@ To create a new user account, send a POST request to `/bleep/v1/auth/register`:
     "name": "tester",
     "password": "Monkey$99",
     "email": "tester@gmail.com"
-    "roles": {
-        "user": 2001
-    }
+
 }
 ```
 
