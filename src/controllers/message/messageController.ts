@@ -128,15 +128,18 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
     conversationId = conversation._id.toString();
     }
 
-      const newMessage = await Message.create([{
+      const newMessage = await Message.create({
         conversationId, 
         senderId, 
         receiverId, 
         message
-      }]);
+      });
+
+      console.log("new message", newMessage);
+
 
       // Populate the message with sender details for broadcasting
-      const populatedMessage = await Message.findById(newMessage[0]._id)
+      const populatedMessage = await Message.findById(newMessage._id)
         .populate('senderId', 'displayName email')
         .exec();
 
@@ -162,7 +165,7 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
       }
 
       return res.status(StatusCodes.CREATED).json(dataUtils.responseData("success", "Message sent successfully", {
-        newMessage: newMessage[0],
+        newMessage: newMessage,
         conversationId
       }));
     }catch(error){
