@@ -118,6 +118,26 @@ MONGODB_URI=mongodb://localhost:27017/alexmap
 VITE_SOCKET_URL=http://localhost:3001
 ```
 
+## Test Accounts
+
+For testing purposes, you can use these pre-configured accounts:
+
+### Admin Account
+- **Email:** `admin@gmail.com`
+- **Password:** `Monkey$99`
+- **Role:** Admin (2003)
+
+### User Accounts
+- **User 1:**
+  - **Email:** `alice@gmail.com`
+  - **Password:** `Monkey$99`
+  - **Role:** User (2001)
+
+- **User 2:**
+  - **Email:** `tester@gmail.com`
+  - **Password:** `Monkey$99`
+  - **Role:** User (2001)
+
 ## Installation
 
 ```bash
@@ -133,6 +153,8 @@ npm test
 # Build for production
 npm run build
 ```
+
+> **Note:** These accounts are for development and testing purposes only. In production, use secure authentication practices.
 
 ## Security Features
 
