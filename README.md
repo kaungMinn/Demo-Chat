@@ -155,17 +155,54 @@ To create a new user account, send a POST request to `/bleep/v1/auth/register`:
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm run dev
 
 # Run tests
-npm test
+pnpm test
+
+# Run tests with coverage
+pnpm run test:coverage
 
 # Build for production
-npm run build
+pnpm run build
 ```
+
+## Testing
+
+The project includes comprehensive Jest tests for all features:
+
+### Test Categories
+- **Authentication Tests** - User registration, login, role-based access
+- **Message Tests** - Message creation, retrieval, real-time broadcasting
+- **Conversation Tests** - Conversation creation, role assignment, integrity
+- **Integration Tests** - End-to-end API workflows
+
+### Running Tests
+```bash
+# Run all tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test -- --watch
+
+# Run tests with coverage report
+pnpm run test:coverage
+
+# Run specific test file
+pnpm test -- auth.test.ts
+
+# Run tests matching pattern
+pnpm test -- --testNamePattern="should login"
+```
+
+### Test Environment
+- Uses **MongoDB Memory Server** for isolated testing
+- **Mock JWT middleware** for authentication testing
+- **Test database** is automatically created and cleaned
+- **Node environment** set to 'test' during testing
 
 > **Note:** These accounts are for development and testing purposes only. In production, use secure authentication practices.
 
