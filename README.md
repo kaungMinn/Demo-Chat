@@ -138,6 +138,21 @@ For testing purposes, you can use these pre-configured accounts:
   - **Password:** `Monkey$99`
   - **Role:** User (2001)
 
+### Registration Example
+
+To create a new user account, send a POST request to `/bleep/v1/auth/register`:
+
+```json
+{
+    "name": "tester",
+    "password": "Monkey$99",
+    "email": "tester@gmail.com"
+    "roles": {
+        "admin": 2001
+    }
+}
+```
+
 ## Installation
 
 ```bash
